@@ -1,9 +1,26 @@
-<script>
-onMounted(() => {
-  async function getAccessToken() {
-    const clientId = 'efb074404f224135a60685d521a9486c';
-    const clientSecret = 'd0e880e15fd74523aee6e82575b6c6c7';
+<script setup>
+import { onMounted, ref } from 'vue';
+import { Swiper, SwiperSlide } from 'swiper/vue';
+import 'swiper/swiper-bundle.css';
+import { useRouter } from 'vue-router';
 
+const router = useRouter();
+
+const playlists = ref([]);
+const newTracks = ref([]);
+const user = ref([]);
+const searchQuery = ref('');
+const results = ref([]);
+// const currentTrack = ref(null);
+// const audioPlayer = ref(null);
+
+const redirectUri = 'http://localhost:3000/authorization';
+
+async function getAccessToken() {
+  const clientId = 'efb074404f224135a60685d521a9486c';
+  const clientSecret = 'd0e880e15fd74523aee6e82575b6c6c7';
+
+  try {
     const response = await fetch('https://accounts.spotify.com/api/token', {
       method: 'POST',
       headers: {
@@ -11,130 +28,214 @@ onMounted(() => {
         Authorization: 'Basic ' + btoa(clientId + ':' + clientSecret),
       },
       body: 'grant_type=client_credentials',
-
-      //  "grant_type=client_credentials&client_id=efb074404f224135a60685d521a9486c&client_secret=d0e880e15fd74523aee6e82575b6c6c7"
     });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
     const data = await response.json();
     return data.access_token;
-
-    console.log(data, 'data');
+  } catch (error) {
+    console.error('Error fetching access token:', error);
   }
-}, []);
+}
 
-async function getArtistData(artistId) {
-  const token = await getAccessToken();
+onMounted(async () => {
+  const fetchFeaturedPlaylists = async () => {
+    try {
+      const token = await getAccessToken();
+
+      const result = await fetch(
+        'https://api.spotify.com/v1/browse/featured-playlists',
+        {
+          method: 'GET',
+          headers: { Authorization: 'Bearer ' + token },
+        }
+      );
+      const data = await result.json();
+
+      if (data && data.playlists && data.playlists.items) {
+        playlists.value = data.playlists.items;
+      } else {
+        console.log('No playlists found.');
+      }
+    } catch (error) {
+      console.error('Error fetching featured playlists:', error);
+    }
+  };
+
+  const fetchNewReleases = async () => {
+    try {
+      const token = await getAccessToken();
+
+      const result = await fetch(
+        'https://api.spotify.com/v1/browse/new-releases',
+        {
+          method: 'GET',
+          headers: { Authorization: 'Bearer ' + token },
+        }
+      );
+      const data = await result.json();
+
+      if (data && data.albums && data.albums.items) {
+        const trackPromises = data.albums.items.map(async (album) => {
+          const albumDetails = await fetch(
+            `https://api.spotify.com/v1/albums/${album.id}`,
+            {
+              method: 'GET',
+              headers: { Authorization: 'Bearer ' + token },
+            }
+          );
+          const albumData = await albumDetails.json();
+          return albumData.tracks.items;
+        });
+
+        const allTracks = await Promise.all(trackPromises);
+        newTracks.value = allTracks.flat();
+        console.log(newTracks.value.slice(0, 1), 'tracks');
+      } else {
+        console.log('No albums found.');
+      }
+    } catch (error) {
+      console.error('Error fetching new releases:', error);
+    }
+  };
+
+  const fetchUserProfile = async () => {
+    const token = localStorage.getItem('spotifyAccessToken');
+
+    try {
+      const result = await fetch('https://api.spotify.com/v1/me', {
+        method: 'GET',
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      const data = await result.json();
+      user.value = data;
+      console.log('User profile:', data);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+    }
+  };
+
+  fetchFeaturedPlaylists();
+
+  fetchNewReleases();
+
+  fetchUserProfile();
+});
+
+const loginWithSpotify = () => {
+  const clientId = 'efb074404f224135a60685d521a9486c';
+  const scope = 'user-read-private user-read-email playlist-read-private';
+  const spotifyAuthUrl = `https://accounts.spotify.com/authorize?client_id=${clientId}&response_type=code&redirect_uri=${encodeURIComponent(
+    redirectUri
+  )}&scope=${encodeURIComponent(scope)}`;
+
+  window.location.href = spotifyAuthUrl;
+};
+
+const searchMusic = async () => {
+  let token = localStorage.getItem('spotifyAccessToken');
+  const refreshToken = localStorage.getItem('spotifyRefreshToken');
+
+  if (!token) return;
+
+  const isExpired = isTokenExpired(token);
+  if (isExpired && refreshToken) {
+    token = await refreshAccessToken(refreshToken);
+  }
+
   const response = await fetch(
-    `https://api.spotify.com/v1/artists/${artistId}`,
+    `https://api.spotify.com/v1/search?q=${searchQuery.value}&type=track`,
     {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     }
   );
-  return await response.json();
-}
 
-export default {
-  data() {
-    return {
-      featuredMusics: [
-        {
-          constant: 'listen',
-          genre: 'Afro beat',
-          artist: 'Asake',
-          image: '../public/nft1.png',
-        },
-        {
-          constant: 'listen',
-          genre: 'Rap',
-          artist: 'Blackbonez',
-          image: '../public/nft2.png',
-        },
-        {
-          constant: 'listen',
-          genre: 'Afro beat',
-          artist: 'Ayra Starr',
-          image: '../public/nft3.png',
-        },
-        {
-          constant: 'listen',
-          genre: 'Afro beat',
-          artist: 'Tems',
-          image: '../public/nft4.png',
-        },
-        {
-          constant: 'listen',
-          genre: 'Hip hop',
-          artist: 'Travis Scott',
-          image: '../public/nft5.png',
-        },
-      ],
+  const data = await response.json();
+  results.value = data.tracks.items;
+};
 
-      tracks: [
-        {
-          id: 1,
-          title: 'Remembrance (Main Mix)',
-          artist: 'Anna',
-          album: 'Speicher 105',
-          time: '5:41',
-          image: '/path/to/image1.png',
-        },
-        {
-          id: 2,
-          title: 'Bounce',
-          artist: 'Dimitri Vegas & Like Mike, Julian Banks, Snoop Dogg',
-          album: 'Bounce',
-          time: '2:37',
-          image: '/path/to/image2.png',
-        },
-        {
-          id: 3,
-          title: '25 Soldiers',
-          artist: 'Swizz Beatz, Young Thug',
-          album: '25 Soldiers',
-          time: '4:47',
-          image: '/path/to/image3.png',
-        },
-        {
-          id: 4,
-          title: 'Your Biggest Fan',
-          artist: 'Marie Davidson',
-          album: 'Working Class Woman',
-          time: '4:25',
-          image: '/path/to/image4.png',
-        },
-        {
-          id: 5,
-          title: 'Tints (feat. Kendrick Lamar)',
-          artist: 'Anderson .Paak',
-          album: 'Tints (feat. Kendrick Lamar)',
-          time: '4:29',
-          image: '/path/to/image5.png',
-        },
-      ],
-    };
-  },
+const isTokenExpired = (token) => {
+  try {
+    const base64Url = token.split('.')[1];
+    if (!base64Url) throw new Error('Invalid token format');
+
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+
+    const padding = '='.repeat((4 - (base64.length % 4)) % 4);
+    const decoded = atob(base64 + padding);
+
+    const payload = JSON.parse(decoded);
+    const expirationTime = payload.exp * 1000;
+    return Date.now() >= expirationTime;
+  } catch (error) {
+    console.error('Error decoding token:', error);
+    return true;
+  }
+};
+
+const refreshAccessToken = async (refreshToken) => {
+  const clientId = 'efb074404f224135a60685d521a9486c';
+  const clientSecret = 'd0e880e15fd74523aee6e82575b6c6c7';
+
+  const response = await fetch('https://accounts.spotify.com/api/token', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+      Authorization: `Basic ${btoa(`${clientId}:${clientSecret}`)}`,
+    },
+    body: new URLSearchParams({
+      grant_type: 'refresh_token',
+      refresh_token: refreshToken,
+    }),
+  });
+
+  const data = await response.json();
+
+  if (data.access_token) {
+    localStorage.setItem('spotifyAccessToken', data.access_token);
+    return data.access_token;
+  } else {
+    console.error('Failed to refresh access token:', data);
+    return null;
+  }
 };
 </script>
 
 <template>
-  <div class="flex h-screen overflow-hidden">
+  <div class="flex h-screen">
     <div class="w-[20%] h-full bg-[#191414] p-4">
       <div class="flex items-center justify-between">
-        <img
-          src="../public/musee.jpeg"
-          alt=""
-          class="w-[60px] h-[60px] cursor-pointer"
-        />
+        <NuxtLink to="/">
+          <img
+            src="../public/musee.jpeg"
+            alt=""
+            class="w-[60px] h-[60px] cursor-pointer"
+          />
+        </NuxtLink>
 
-        <Icon name="mdi-user" size="35px" class="text-[#fff] cursor-pointer" />
+        <p v-if="user" class="text-[#fff]">
+          {{ data?.display_name?.split(' ').slice(0, 2).join(' ') }}
+        </p>
+
+        <Icon
+          v-else
+          name="mdi-user"
+          size="35px"
+          class="text-[#fff] cursor-pointer"
+          @click="loginWithSpotify"
+        />
       </div>
 
       <div class="ml-6 mt-9">
         <div class="flex items-center gap-5 cursor-pointer">
           <img src="../public/musee.jpeg" alt="" class="w-[25px] h-[25px]" />
 
-          <p class="text-[#fff]">Home</p>
+          <p class="text-[#fff]"><NuxtLink to="/">Home</NuxtLink></p>
         </div>
 
         <div class="mt-4 flex items-center gap-5 cursor-pointer">
@@ -177,34 +278,23 @@ export default {
 
         <p class="text-gray-500">...</p>
       </div>
-      <div class="ml-6 mt-4 flex items-center gap-5 cursor-pointer">
-        <Icon name="mdi-plus-circle" size="25px" class="text-gray-500" />
+
+      <div class="ml-6 mt-4 flex items-center gap-4 cursor-pointer">
+        <div class="p-[2px] bg-gray-500 rounded-full flex justify-center">
+          <Icon name="mdi-plus" size="20px" class="" />
+        </div>
 
         <p class="text-[#fff]">New playlist</p>
       </div>
 
       <div class="ml-6 h-[300px] overflow-hidden overflow-y-auto text-[#fff]">
-        <p class="mt-3">hgffgdzhgffgdz hgffgdz hgffgdz</p>
-        <p class="my-2">hgffgdz hgffgdz hgffgdz</p>
-        <p class="my-2">hgffgdz hgffgdz hgffgdz</p>
-        <p class="my-2">hgffgdz hgffgdz hgffgdz</p>
-        <p class="my-2">hgffgdz hgffgdz hgffgdz</p>
-        <p class="my-2">hgffgdz hgffgdz hgffgdz</p>
-        <p class="my-2">hgffgdz hgffgdz hgffgdz</p>
-        <p class="my-2">hgffgdz hgffgdz hgffgdz</p>
-        <p class="my-2">hgffgdz hgffgdz hgffgdz</p>
-        <p class="my-2">hgffgdz hgffgdz hgffgdz</p>
-        <p class="my-2">hgffgdz hgffgdz hgffgdz</p>
-        <p class="my-2">hgffgdz hgffgdz hgffgdz</p>
-        <p class="my-2">hgffgdz hgffgdz hgffgdz</p>
-      </div>
-
-      <div class="h-full">
-        <p>hhh</p>
+        <p class="my-3" v-for="(playlist, index) in playlists" :key="index">
+          {{ playlist.name }}
+        </p>
       </div>
     </div>
 
-    <div class="w-[80%] h-full bg-gray-900 p-4">
+    <div class="w-[80%] h-full overflow-y-auto bg-gray-900 p-4">
       <div class="flex items-center justify-between">
         <div class="flex items-center gap-1">
           <Icon name="mdi-arrow-left" class="cursor-pointer text-[#fff]" />
@@ -213,6 +303,8 @@ export default {
 
         <div class="relative">
           <input
+            v-model="searchQuery"
+            @keyup.enter="searchMusic"
             type="text"
             placeholder="Search"
             class="border rounded py-1 px-7 mb-5"
@@ -222,43 +314,48 @@ export default {
             name="mdi-magnify"
             size="22px"
             class="absolute left-1 top-[7px] text-[#000]"
+            @click="searchMusic"
           />
         </div>
       </div>
+      <div v-if="results.length">
+        <h3 class="text-[#fff]">Search Results ({{ results.length }})</h3>
 
-      <p class="my-6 text-[#fff] text-lg font-semibold">Featured</p>
+        <div class="w-full h-auto overflow-x-auto">
+          <div class="w-max flex items-center gap-3">
+            <div
+              v-for="item in results"
+              :key="item.id"
+              class="shrink-0 cursor-pointer"
+            >
+              <div class="w-[270px] h-auto bg-gray-800">
+                <img
+                  :src="item.album?.images[0]?.url"
+                  alt="Album Cover"
+                  class="w-full h-[55%]"
+                />
 
-      <div class="w-full h-auto overflow-x-auto">
-        <div class="w-max flex items-center gap-3">
-          <div
-            v-for="(featuredMusic, index) in featuredMusics"
-            :key="index"
-            class="shrink-0 cursor-pointer"
-          >
-            <div class="w-[270px] h-auto bg-gray-800">
-              <!-- <img :src="featuredMusic.image" alt="" class="w-full h-[50%]" /> -->
-              <img src="../public/musix.jpeg" alt="" class="w-full h-[50%]" />
-
-              <div class="h-[50%] p-4 text-[18px]">
-                <p class="text-green-500">
-                  {{ featuredMusic.constant }}
-                </p>
-                <p class="my-1 text-[#fff]">
-                  {{ featuredMusic.genre }}
-                </p>
-                <p class="text-gray-500">{{ featuredMusic.artist }}</p>
+                <div class="h-[45%] p-4 text-[18px]">
+                  <p class="my-1 text-[#fff]">
+                    {{ item.name.slice(0, 26) }}
+                  </p>
+                </div>
               </div>
             </div>
           </div>
         </div>
       </div>
 
+      <p class="my-6 text-[#fff] text-lg font-semibold">Featured</p>
+
+      <Playlist :playlists="playlists" />
+
       <div class="flex justify-between items-center my-9 text-white">
         <h2 class="text-lg font-semibold">Suggested New Tracks</h2>
         <a href="#" class="text-sm text-gray-400 hover:underline">View all</a>
       </div>
 
-      <div class="h-[300px] overflow-hidden overflow-y-auto text-[#fff]">
+      <div class="h-auto text-[#fff]">
         <table class="table-auto w-full h-full">
           <thead class="border-b border-gray-900">
             <tr>
@@ -271,22 +368,35 @@ export default {
 
           <tbody>
             <tr
-              v-for="track in tracks"
-              :key="track.id"
-              class="border-b border-gray-900"
+              v-for="(track, index) in newTracks.slice(0, 20)"
+              :key="index"
+              class="border-b border-gray-900 cursor-pointer"
+              @click="
+                router.push({
+                  path: '/playing-now',
+                  query: {
+                    track: track.preview_url,
+                    trackName: track.name,
+                    trackArtist: track.artists[0]?.name,
+                  },
+                })
+              "
             >
               <td class="flex items-center gap-3 px-4 py-2">
-                <!-- <img :src="track.image" alt="" class="w-12 h-12 rounded-md" /> -->
                 <img
                   src="../public/nft1.png"
                   alt=""
                   class="w-12 h-12 rounded-md"
                 />
-                <span>{{ track.title }}</span>
+                <span>{{ track.name }}</span>
               </td>
-              <td class="px-4 py-2">{{ track.artist }}</td>
-              <td class="px-4 py-2">{{ track.album }}</td>
-              <td class="text-right px-4 py-2">{{ track.time }}</td>
+              <td class="px-4 py-2">{{ track.artists[0]?.name }}</td>
+              <td class="px-4 py-2">
+                {{ track.album?.name || 'Unknown Album' }}
+              </td>
+              <td class="text-right px-4 py-2">
+                {{ (track.duration_ms / 60000).toFixed(2) }}
+              </td>
               <td class="text-right px-4 py-2">
                 <button class="text-white px-2">+</button>
                 <button class="text-gray-400 px-2">
@@ -303,16 +413,19 @@ export default {
 
 <style scoped>
 ::-webkit-scrollbar {
-  display: none; /* Hide the scrollbar */
+  display: none;
 }
 
-/* Hide the scrollbar for Firefox */
 ::-moz-scrollbar {
   display: none;
 }
 
-/* Hide the scrollbar for IE */
 ::-ms-scrollbar {
   display: none;
+}
+
+.mySwiper {
+  width: 100%;
+  height: auto;
 }
 </style>
