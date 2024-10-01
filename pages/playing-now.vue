@@ -26,15 +26,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-full h-full flex justify-center items-center">
-    <div class="flex flex-col items-center shadow-xl rounded-[10px] p-20">
-      <h1 class="text-[24px]">
+  <div class="w-full h-full flex justify-center items-center bg-[#191414]">
+    <div
+      class="flex flex-col items-center bg-[#644b4b07] shadow-2xl rounded-[10px] p-20"
+    >
+      <h1 class="text-[24px] text-[#fff]">
         Now Playing: {{ trackName }} by {{ trackArtist }}
       </h1>
+
       <img
         src="../public/nowplaying.jpg"
         alt=""
-        class="w-[400px] h-[400px] cursor-pointer"
+        class="w-[400px] h-[400px] cursor-pointer my-3"
       />
 
       <div class="w-full p-2 bg-green-400 rounded-full shadow-xl">
