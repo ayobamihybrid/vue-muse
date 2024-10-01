@@ -10,7 +10,7 @@ onMounted(async () => {
   if (code) {
     const clientId = 'efb074404f224135a60685d521a9486c';
     const clientSecret = 'd0e880e15fd74523aee6e82575b6c6c7';
-    const redirectUri = 'http://localhost:3000/authorization';
+    const redirectUri = 'https://vue-muse.vercel.app/authorization';
 
     const body = new URLSearchParams();
     body.append('grant_type', 'authorization_code');
