@@ -226,7 +226,7 @@ const refreshAccessToken = async (refreshToken) => {
 </script>
 
 <template>
-  <div class="flex h-screen">
+  <div class="flex h-screen overflow-hidden">
     <div class="w-[20%] h-full bg-[#191414] p-4">
       <div class="flex items-center justify-between">
         <NuxtLink to="/">

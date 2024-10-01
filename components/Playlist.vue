@@ -35,7 +35,7 @@ const truncateDescription = (description, maxLength) => {
       @swiper="onSwiper"
     >
       <swiper-slide v-for="(playlist, index) in playlists" :key="index">
-        <div class="w-[270px] h-auto bg-gray-800">
+        <div class="w-full h-auto bg-gray-800">
           <img
             :src="playlist.images[0]?.url"
             alt=""
