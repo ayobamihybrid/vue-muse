@@ -11,8 +11,6 @@ const newTracks = ref([]);
 const user = ref([]);
 const searchQuery = ref('');
 const results = ref([]);
-// const currentTrack = ref(null);
-// const audioPlayer = ref(null);
 
 const redirectUri = 'http://localhost:3000/authorization';
 
@@ -101,7 +99,24 @@ onMounted(async () => {
   };
 
   const fetchUserProfile = async () => {
-    const token = localStorage.getItem('spotifyAccessToken');
+    let token = localStorage.getItem('spotifyAccessToken');
+    const refreshToken = localStorage.getItem('spotifyRefreshToken');
+
+    if (!token) {
+      console.error('No access token found');
+      return;
+    }
+
+    const isExpired = isTokenExpired(token);
+    if (isExpired && refreshToken) {
+      console.log('Token expired, refreshing...');
+      token = await refreshAccessToken(refreshToken);
+    }
+
+    if (!token) {
+      console.error('Failed to retrieve a valid access token');
+      return;
+    }
 
     try {
       const result = await fetch('https://api.spotify.com/v1/me', {
@@ -111,8 +126,12 @@ onMounted(async () => {
         },
       });
       const data = await result.json();
-      user.value = data;
-      console.log('User profile:', data);
+      if (result.ok) {
+        user.value = data;
+        console.log('User profile:', data);
+      } else {
+        console.error('Error fetching user profile:', data);
+      }
     } catch (error) {
       console.error('Error fetching user profile:', error);
     }
@@ -218,8 +237,19 @@ const refreshAccessToken = async (refreshToken) => {
           />
         </NuxtLink>
 
-        <p v-if="user" class="text-[#fff]">
-          {{ data?.display_name?.split(' ').slice(0, 2).join(' ') }}
+        <p
+          v-if="user"
+          class="text-[#fff] cursor-pointer"
+          @click="
+            router.push({
+              path: '/dashboard',
+              query: {
+                userName: user.display_name,
+              },
+            })
+          "
+        >
+          {{ user?.display_name?.split(' ').slice(0, 2).join(' ') }}
         </p>
 
         <Icon
