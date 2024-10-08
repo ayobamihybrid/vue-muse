@@ -137,7 +137,6 @@ const playPlaylist = async (playlistId) => {
   }
 
   try {
-    // First, get the tracks of the playlist
     const response = await fetch(
       `https://api.spotify.com/v1/playlists/${playlistId}/tracks`,
       {

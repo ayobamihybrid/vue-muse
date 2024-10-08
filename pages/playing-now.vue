@@ -6,6 +6,7 @@ const route = useRoute();
 const audioPlayer = ref(null);
 
 const track = route.query.track || '';
+console.log(track, 'track');
 const trackName = route.query.trackName || '';
 const trackArtist = route.query.trackArtist || '';
 

@@ -217,7 +217,7 @@ const searchMusic = async (queryType) => {
 
   let query =
     queryType === 'searchQuery'
-      ? searchQuery.value.trim() // Trim any extra spaces
+      ? searchQuery.value.trim()
       : queryType === 'searchQueryTwo'
       ? searchQueryTwo.value.trim()
       : '';
@@ -389,13 +389,12 @@ const uploadCoverImage = async (playlistId, token) => {
         console.log('Playlist ID:', playlistId);
         console.log('Image size:', base64data.length, 'bytes');
 
-        // Check if the image is too large (Spotify limit is 256KB)
         if (base64data.length > 256 * 1024) {
           throw new Error('Image file is too large. Maximum size is 256KB.');
         }
 
         const controller = new AbortController();
-        const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+        const timeoutId = setTimeout(() => controller.abort(), 30000);
 
         const imageResponse = await fetch(
           `https://api.spotify.com/v1/playlists/${playlistId}/images`,
@@ -500,8 +499,8 @@ const addTrack = async (track) => {
   if (!trackExists) {
     initialTracks.value.push({
       uri: track.uri,
-      name: track.name, // Adding name for display purposes
-      artists: track.artists.map((artist) => artist.name).join(', '), // Adding artists for display purposes
+      name: track.name,
+      artists: track.artists.map((artist) => artist.name).join(', '),
     });
     console.log('Track added to playlist:', track.name);
   } else {
