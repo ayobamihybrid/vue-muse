@@ -265,7 +265,7 @@ const togglePlaylistTrack = () => {
                     router.push({
                       path: '/playing-now',
                       query: {
-                        track: track.uril,
+                        track: track.uri,
                         trackName: track.name,
                         trackArtist: track.artists[0]?.name,
                       },

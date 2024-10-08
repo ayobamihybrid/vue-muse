@@ -28,7 +28,7 @@ onMounted(() => {
 <template>
   <div class="w-full h-full flex justify-center items-center bg-[#191414]">
     <div
-      class="flex flex-col items-center bg-[#644b4b07] shadow-2xl rounded-[10px] p-20"
+      class="w-full max-w-[1000px] flex flex-col items-center bg-[#644b4b07] shadow-2xl rounded-[10px] p-20"
     >
       <h1 class="text-[24px] text-[#fff]">
         Now Playing: {{ trackName }} by {{ trackArtist }}
