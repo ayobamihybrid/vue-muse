@@ -130,7 +130,7 @@ onMounted(async () => {
 
       if (data && data.tracks) {
         newTracks.value = data.tracks;
-        console.log(newTracks.value.slice(0, 1), 'recommended tracks');
+        console.log(newTracks.value.slice(0, 1), 'new tracks');
       } else {
         console.log('No recommended tracks found.');
       }
@@ -655,7 +655,7 @@ const toggleAddMusic = () => {
         class="absolute top-0 left-0 right-0 bottom-0 bg-black/25 backdrop-blur-sm flex justify-center items-center z-[99999] shadow-lg"
       >
         <div
-          class="w-full max-w-[1200px] min-h-[200px] p-5 bg-white shadow-xl rounded-[10px]"
+          class="w-full max-w-[1200px] min-h-[200px] p-5 bg-gradient-to-br from-gray-900 to-black shadow-xl rounded-[10px] text-[#fff]"
         >
           <div class="flex justify-between items-center">
             <p class="text-[26px]">New Playlist</p>
@@ -671,7 +671,7 @@ const toggleAddMusic = () => {
               id="name"
               name="name"
               required
-              class="mt-9 border rounded w-full py-2 px-3 mb-2"
+              class="mt-9 border rounded w-full py-2 px-3 mb-2 bg-transparent"
             />
 
             <input
@@ -680,14 +680,11 @@ const toggleAddMusic = () => {
               placeholder="Provide a description for your playlist"
               id="name"
               name="name"
-              class="border rounded w-full py-2 px-3 mb-2"
+              class="mt-2 border rounded w-full py-2 px-3 mb-2 bg-transparent"
             />
 
-            <div class="mb-4">
-              <label
-                for="cover-image"
-                class="block text-sm font-medium text-gray-700 mb-1"
-              >
+            <div class="my-4">
+              <label for="cover-image" class="block text-sm font-medium mb-1">
                 Cover Image
               </label>
 
@@ -708,13 +705,9 @@ const toggleAddMusic = () => {
               />
             </div>
 
-            <div class="flex gap-1" @click="toggleAddMusic">
-              <p class="block text-sm font-medium text-gray-700 mb-1">
-                Add music
-              </p>
-
-              <Icon name="mdi-plus" size="20px" class="text-[#000]" />
-            </div>
+            <p @click="toggleAddMusic" class="block text-xl font-medium my-5">
+              Add music +
+            </p>
 
             <div v-if="addMusic" class="relative">
               <div class="flex gap-2">
@@ -723,7 +716,7 @@ const toggleAddMusic = () => {
                   @keyup.enter="searchMusic('searchQueryTwo')"
                   type="text"
                   placeholder="Search"
-                  class="border rounded py-1 px-7 mb-5"
+                  class="border rounded py-1 px-7 mb-5 bg-transparent"
                 />
 
                 <p @click="searchMusic('searchQueryTwo')">search</p>
@@ -869,7 +862,8 @@ const toggleAddMusic = () => {
                 router.push({
                   path: '/playing-now',
                   query: {
-                    track: track.preview_url,
+                    track: track.uri,
+                    trackId: track.id,
                     trackName: track.name,
                     trackArtist: track.artists[0]?.name,
                   },

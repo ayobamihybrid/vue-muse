@@ -265,6 +265,7 @@ const togglePlaylistTrack = () => {
                       path: '/playing-now',
                       query: {
                         track: track.uri,
+                        trackId: track.id,
                         trackName: track.name,
                         trackArtist: track.artists[0]?.name,
                       },

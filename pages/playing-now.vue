@@ -5,10 +5,7 @@ import { useRoute } from 'vue-router';
 const route = useRoute();
 const audioPlayer = ref(null);
 
-const track = route.query.track || '';
-console.log(track, 'track');
-const trackName = route.query.trackName || '';
-const trackArtist = route.query.trackArtist || '';
+const trackId = route.query.trackId;
 
 onMounted(() => {
   const playMusic = () => {
@@ -27,23 +24,18 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="w-full h-full flex justify-center items-center bg-[#191414]">
-    <div
-      class="w-full max-w-[1000px] flex flex-col items-center bg-[#644b4b07] shadow-2xl rounded-[10px] p-20"
-    >
-      <h1 class="text-[24px] text-[#fff]">
-        Now Playing: {{ trackName }} by {{ trackArtist }}
-      </h1>
-
-      <img
-        src="../public/nowplaying.jpg"
-        alt=""
-        class="w-[400px] h-[400px] cursor-pointer my-3"
-      />
-
-      <div class="w-full p-2 bg-green-400 rounded-full shadow-xl">
-        <audio ref="audioPlayer" :src="track" controls></audio>
-      </div>
+  <div
+    class="min-h-screen w-full flex justify-center items-center bg-gradient-to-br from-gray-900 to-black p-6"
+  >
+    <div class="max-w-4xl w-full rounded-lg">
+      <iframe
+        :src="`https://open.spotify.com/embed/track/${trackId}`"
+        width="100%"
+        height="400"
+        frameborder="0"
+        allowtransparency="true"
+        allow="encrypted-media"
+      ></iframe>
     </div>
   </div>
 </template>
